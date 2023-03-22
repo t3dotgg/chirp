@@ -1,34 +1,20 @@
 name: CI
 
-on: [push]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+on: [push, pull_request]
 
 jobs:
   build:
-    name: Lint and Typecheck
-    runs-on: ubuntu-18.04
-    strategy:
-      matrix:
-        node_version: [18]
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node_version }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node_version }}
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - name: install npm dependencies
-        run: |
-          npm install
+      - name: Install Dependencies
+        run: npm install
 
-      - name: run typecheck
-        run: |
-          npm run typecheck
+      - name: Typecheck
+        run: npm run typecheck
 
-      - name: run lint
-        run: |
-          npm run lint
+      - name: Lint
+        run: npm run lint
