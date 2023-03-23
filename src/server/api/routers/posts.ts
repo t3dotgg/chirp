@@ -28,6 +28,7 @@ const addUserDataToPosts = async (posts: Post[]) => {
 
     // TODO: Figure out why we're not getting authors back sometimes
     if (!author || !author.username) {
+      console.error("AUTHOR NOT FOUND", post);
       return [];
       // throw new TRPCError({
       //   code: "INTERNAL_SERVER_ERROR",
