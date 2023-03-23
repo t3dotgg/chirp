@@ -14,37 +14,32 @@ import { filterUserForClient } from "~/server/helpers/filterUserForClient";
 import type { Post } from "@prisma/client";
 
 const addUserDataToPosts = async (posts: Post[]) => {
+  const userId = posts.map((post) => post.authorId);
   const users = (
     await clerkClient.users.getUserList({
-      userId: posts.map((post) => post.authorId),
-      limit: 100,
+      userId: userId,
+      limit: 110,
     })
   ).map(filterUserForClient);
 
-  console.log(users);
-
-  return posts.flatMap((post) => {
+  return posts.map((post) => {
     const author = users.find((user) => user.id === post.authorId);
 
-    // TODO: Figure out why we're not getting authors back sometimes
-    if (!author || !author.username) {
+    if (!author) {
       console.error("AUTHOR NOT FOUND", post);
-      return [];
-      // throw new TRPCError({
-      //   code: "INTERNAL_SERVER_ERROR",
-      //   message: `Author for post not found. POST ID: ${post.id}, USER ID: ${post.authorId}`,
-      // });
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Author for post not found. POST ID: ${post.id}, USER ID: ${post.authorId}`,
+      });
     }
 
-    return [
-      {
-        post,
-        author: {
-          ...author,
-          username: author.username,
-        },
+    return {
+      post,
+      author: {
+        ...author,
+        username: author.username ?? "(no username)",
       },
-    ];
+    };
   });
 };
 
