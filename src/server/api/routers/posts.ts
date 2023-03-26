@@ -23,6 +23,7 @@ const addUserDataToPosts = async (posts: Post[]) => {
   ).map(filterUserForClient);
 
   return posts.map((post) => {
+
     const author = users.find((user) => user.id === post.authorId);
 
     if (!author) {
@@ -32,7 +33,16 @@ const addUserDataToPosts = async (posts: Post[]) => {
         message: `Author for post not found. POST ID: ${post.id}, USER ID: ${post.authorId}`,
       });
     }
-
+    if (!author.username) {
+      // user the ExternalUsername
+      if (!author.externalUsername) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Author has no GitHub Account: ${author.id}`,
+        });
+      }
+      author.username = author.externalUsername;
+    }
     return {
       post,
       author: {
