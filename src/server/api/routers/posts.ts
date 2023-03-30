@@ -8,7 +8,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 
-import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
+import { Ratelimit } from "@upstash/ratelimit"; 
 import { Redis } from "@upstash/redis";
 import { filterUserForClient } from "~/server/helpers/filterUserForClient";
 import type { Post } from "@prisma/client";
