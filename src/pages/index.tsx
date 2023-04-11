@@ -3,13 +3,12 @@ import { type NextPage } from "next";
 
 import { api } from "~/utils/api";
 
-import Image from "next/image";
 import { LoadingPage, LoadingSpinner } from "~/components/loading";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { PageLayout } from "~/components/layout";
 import { PostView } from "~/components/postview";
-
+import { useInView } from "react-intersection-observer";
 const CreatePostWizard = () => {
   const { user } = useUser();
 
@@ -20,7 +19,7 @@ const CreatePostWizard = () => {
   const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
     onSuccess: () => {
       setInput("");
-      void ctx.posts.getAll.invalidate();
+      void ctx.posts.infiniteScroll.invalidate();
     },
     onError: (e) => {
       const errorMessage = e.data?.zodError?.fieldErrors.content;
@@ -35,16 +34,17 @@ const CreatePostWizard = () => {
   if (!user) return null;
 
   return (
-
     <div className="flex w-full gap-3">
-      <UserButton appearance={{
-        elements: {
-          userButtonAvatarBox: {
-            width: 56,
-            height: 56
-          }
-        }
-      }} />
+      <UserButton
+        appearance={{
+          elements: {
+            userButtonAvatarBox: {
+              width: 56,
+              height: 56,
+            },
+          },
+        }}
+      />
       <input
         placeholder="Type some emojis!"
         className="grow bg-transparent outline-none"
@@ -74,22 +74,46 @@ const CreatePostWizard = () => {
 };
 
 const Feed = () => {
-  const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isLoading: postsLoading,
+    isFetchingNextPage,
+  } = api.posts.infiniteScroll.useInfiniteQuery(
+    { limit: 25 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
+
+  const { ref, inView } = useInView();
+  useEffect(() => {
+    if (inView) {
+      void fetchNextPage();
+    }
+  }, [inView, fetchNextPage]);
 
   if (postsLoading)
     return (
-      <div className="flex grow">
+      <div className="flex flex-grow">
         <LoadingPage />
       </div>
     );
 
   if (!data) return <div>Something went wrong</div>;
-
   return (
-    <div className="flex grow flex-col overflow-y-scroll">
-      {[...data, ...data, ...data, ...data].map((fullPost) => (
-        <PostView {...fullPost} key={fullPost.post.id} />
-      ))}
+    <div className="relative flex flex-grow flex-col overflow-y-scroll">
+      {!!data &&
+        data.pages.map((page) =>
+          page.posts.map(({ post, author }) => (
+            <PostView post={post} author={author} key={post.id} />
+          ))
+        )}
+      {!!isFetchingNextPage && !!hasNextPage && (
+        <div className="flex w-full justify-center">
+          <LoadingSpinner size={50} />
+        </div>
+      )}
+      <div ref={ref}> </div>
     </div>
   );
 };
