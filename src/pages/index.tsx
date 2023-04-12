@@ -122,7 +122,7 @@ const Home: NextPage = () => {
   const { isLoaded: userLoaded, isSignedIn } = useUser();
 
   // Start fetching asap
-  api.posts.getAll.useQuery();
+  api.posts.infiniteScroll.useInfiniteQuery({ limit: 25 });
 
   // Return empty div if user isn't loaded
   if (!userLoaded) return <div />;
