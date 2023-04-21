@@ -6,7 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "postinstall": "prisma generate",
-    "lint": "next lint",
+    "lint": "DATABASE_URL=\"https://fake.com\" next lint",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },
